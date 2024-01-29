@@ -1198,7 +1198,7 @@ classdef Sequence < handle
             ax=ax([1 3 5 2 4 6]);   % Re-order axes
             arrayfun(@(x)hold(x,'on'),ax);
             arrayfun(@(x)grid(x,'on'),ax);
-            labels={'ADC/labels','RF mag (Hz)','RF/ADC ph (rad)','Gx (kHz/m)','Gy (kHz/m)','Gz (kHz/m)'};
+            labels={'ADC/labels','RF mag (Hz)','RF/ADC ph (rad)','Gx (mT/m)','Gy (mT/m)','Gz (mT/m)'};
             arrayfun(@(x)ylabel(ax(x),labels{x}),1:6);
             
             tFactorList = [1 1e3 1e6];
@@ -1335,6 +1335,7 @@ classdef Sequence < handle
                                 t=cumsum([0 grad.delay grad.riseTime grad.flatTime grad.fallTime]);
                                 waveform=1e-3*grad.amplitude*[0 0 1 1 0];
                             end
+                            waveform = mr.convert(waveform*1e3, 'Hz/m', 'mT/m');
                             plot(tFactor*(t0+t),waveform,'Parent',ax(3+j));
                         end
                     end                

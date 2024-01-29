@@ -29,8 +29,18 @@ end
 gw=obj.waveforms_and_times();
 if doPlots
     figure;
-    plot(gw{1}(1,:),gw{1}(2,:),gw{2}(1,:),gw{2}(2,:),gw{3}(1,:),gw{3}(2,:)); % plot the entire gradient shape
-    title('gradient wave form, in T/m');
+    col = eye(3);
+
+    for i = 1:3
+        t = gw{i}(1,:);
+        gwf = mr.convert(gw{i}(2,:), 'Hz/m', 'mT/m');
+        plot(t, gwf, '-', 'color', col(:,i)); hold on
+    end
+
+    title('Gradient waveform');
+    ylabel('Gradient [mT/m]')
+    xlabel('Time [s]')
+    legend('read', 'phase', 'slice')
 end
 
 % find beginning and end times and resample GWs to a regular sampling raster
