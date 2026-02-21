@@ -18,6 +18,10 @@ function [grad] = scaleGrad(grad, scale, system)
         grad.waveform=grad.waveform*scale;
         grad.first=grad.first*scale;
         grad.last=grad.last*scale;
+
+        % Filip Sz, fixing bug with area not updating
+        grad.area = grad.area*scale;
+        
         if nargin>2
             if system.maxGrad<max(abs(grad.waveform))
                 error("mr.scaleGrad: maximum amplitude exceeded (%g %%)",100*max(abs(grad.waveform))/system.maxGrad);
