@@ -6,7 +6,7 @@ Nx = 256;
 Nrep = 16;
 
 % Create non-selective pulse 
-rf = mr.makeBlockPulse(pi/2, 'Duration', 0.1e-3, 'system', system,'use','excitation');
+rf = mr.makeBlockPulse(pi/2, 'Duration', 0.3e-3, 'system', system,'use','excitation');
 
 % Define delays and ADC events
 adc = mr.makeAdc(Nx, 'Duration', 3.2e-3, 'system', system,'delay', system.adcDeadTime);
@@ -21,6 +21,19 @@ for i=1:Nrep
     seq.addBlock(mr.makeDelay(delayTR))
 end
 
+% check sequence timing
+[ok, error_report]=seq.checkTiming ;
+
+if (ok)
+    fprintf('Timing check passed successfully\n') ;
+else
+    fprintf('Timing check failed! Error listing follows:\n') ;
+    fprintf([error_report{:}]);
+    fprintf('\n');
+    error('Sequence timing check failed!');
+end
+
+% prepare export
 seq.setDefinition('Name', 'fid');
 
 seq.write('fid.seq');       % Write to pulseq file

@@ -9,7 +9,7 @@ function [varargout] = align(varargin)
 %   during calculating of the block duration but then reset according to 
 %   the selected alignment.
 %   Possible values for align_spec are 'left', 'center', 'right'
-%   WARNING: 'center' may break graient raster alignment
+%   WARNING: 'center' may break gradient raster alignment
 %   When a numerical parameter is passed amongst the events it is
 %   interpreted as the required duration of the block. If the duration of
 %   any of the events exceeds this required duration an error will be thrown.
@@ -27,16 +27,19 @@ if ~ischar(varargin{1})
     error('first parameter must be a string');
 end
 curr_align=find(strcmp(varargin{1},alignment_options));
+if isempty(curr_align)
+    error('invalid alignment spec');
+end
 iobjects=[];
 alignments=[];
 required_duration=[];
 
 for i=2:length(varargin)
-    if isempty(curr_align)
-        error('invalid alignment spec');
-    end
     if ischar(varargin{i})
         curr_align=find(strcmp(varargin{i},alignment_options));
+        if isempty(curr_align)
+            error('invalid alignment spec');
+        end
         continue;
     end
     if isnumeric(varargin{i})
@@ -46,7 +49,7 @@ for i=2:length(varargin)
         required_duration=varargin{i};
         continue;
     end
-    iobjects=[iobjects i];
+    iobjects(end+1)=i;
     alignments=[alignments curr_align];
 end
 
@@ -55,18 +58,21 @@ objects={varargin{iobjects}};
 dur=mr.calcDuration(objects);
 if ~isempty(required_duration)
     if dur-required_duration>eps
-        error('Required block duration is %g s but actuall block duration is %g s', required_duration, dur);
+        error('Required block duration is %g s but actual block duration is %g s', required_duration, dur);
     end
     dur=required_duration;
 end
 
 % set new delays
 for i=1:length(objects)
+    if isfield(objects{i},'id')
+        error('attempting to align() readily registered object! please register objects after calling this function or deregister the argument(s) by calling rmfield(...,''id'')');
+    end
     switch alignments(i)
         case 1
             objects{i}.delay=0;
         case 2
-            objects{i}.delay=(dur - mr.calcDuration(objects{i}))/2; % FIXME check how to handle the existing delay
+            objects{i}.delay=(dur - mr.calcDuration(objects{i}) + objects{i}.delay)/2;
         case 3
             ev=objects{i};
             ev_dur=mr.calcDuration(ev);
@@ -75,7 +81,7 @@ for i=1:length(objects)
             %end
             objects{i}.delay=dur - ev_dur + objects{i}.delay;
             if objects{i}.delay < 0
-                error('aligh() attempts to set a negative delay, probably some RF pulses ignore rfRingdownTime');
+                error('align() attempts to set a negative delay, probably some RF pulses ignore rfRingdownTime');
             end
     end
 end
@@ -85,13 +91,14 @@ if nargout==length(objects)
 elseif ~isempty(required_duration) && nargout==length(objects)+1
     varargout=objects;
     varargout{end+1}=required_duration;
-elseif nargout==1    
-    varargout={objects};
-    if ~isempty(required_duration)
-        varargout{end+1}=required_duration;
+elseif nargout==1
+    if isempty(required_duration)
+        varargout={objects};
+    else
+        varargout={[objects {required_duration}]};
     end
 elseif nargout<length(objects)
-    warning('not all objects can be assigned to the output argiments; we recommend using ~ to discard output arguments explicitly.');
+    warning('not all objects can be assigned to the output arguments; we recommend using ~ to discard output arguments explicitly.');
     nout=min(nargout,length(objects));
     varargout=objects(1:nout);
 else

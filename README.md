@@ -1,6 +1,6 @@
 <div align="center">
 <a href="http://pulseq.github.io/" target="_blank">
-<img src="http://pulseq.github.io/logo_hires.png" width="250" alt="Pulseq logo"></img>
+<img src="doc/logo_hires.png" width="250" alt="Pulseq logo"></img>
 </a>
 </div>
 
@@ -19,10 +19,11 @@ This project is open source under the MIT License. See [LICENSE](LICENSE) for de
 
 The directories are organized as follows:
 
-* `doc/` - Contains the file specification and HTML source code documentation
-* `examples/` - Contains example sequence files (`*.seq`)
-* `src/` - C++ class for reading sequence files
-* `matlab/` - MATLAB code for reading, writing, modifying and visualizing sequence files
+* [`doc/`](https://github.com/pulseq/pulseq/tree/master/doc) - Contains the file specification and HTML source code documentation
+* [`tests/legacy/approved/`](https://github.com/pulseq/pulseq/tree/master/tests/legacy/approved)
+  - Contains example files in the Pulseq format (`*.seq`)
+* [`src/`](https://github.com/pulseq/pulseq/tree/master/src) - C++ class for reading sequence files
+* [`matlab/`](https://github.com/pulseq/pulseq/tree/master/matlab) - MATLAB code for reading, writing, modifying and visualizing sequence files
 
 ## System requirements
 

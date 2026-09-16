@@ -24,7 +24,7 @@ validPulseUses = mr.getSupportedRfUse();
 
 persistent parser
 if isempty(parser)
-    parser = inputParser;
+    parser = mr.aux.InputParserCompat;
     parser.FunctionName = 'makeBlockPulse';
     
     % RF params
@@ -56,18 +56,21 @@ else
 end
 
 if opt.duration == 0
-    if opt.timeBwProduct > 0
+    if opt.timeBwProduct > 0 && opt.bandwidth > 0
         opt.duration = opt.timeBwProduct/opt.bandwidth;
     elseif opt.bandwidth > 0
         opt.duration = 1/(4*opt.bandwidth);
     else
-        error('Either bandwidth or duration must be defined');
+        error('Either bandwidth or duration must be defined and must be larger than 0');
     end
 end
 
-BW = 1/(4*opt.duration);
 N = round(opt.duration/system.rfRasterTime);
-t = [0; N]*system.rfRasterTime; % CHECKME whether we start at 0 or at 0.5 or at 1 
+if N == 0
+    error('Duration is too short: it rounds to zero RF raster intervals');
+end
+opt.duration = N*system.rfRasterTime; % quantize the duration to the RF raster so that the achieved flip angle is exact
+t = [0; N]*system.rfRasterTime; % we start at 0 and end at N
 signal = opt.flipAngle/(2*pi)/opt.duration*ones(size(t));
 
 rf.type = 'rf';
@@ -95,8 +98,8 @@ end
 %     rf.t = [rf.t rf.t(end)+tFill];
 %     rf.signal = [rf.signal, zeros(size(tFill))];
 % end
-if rf.ringdownTime > 0 && nargout > 1
-    delay=mr.makeDelay(mr.calcDuration(rf)+rf.ringdownTime);
+if nargout > 1
+    delay=mr.makeDelay(mr.calcDuration(rf)); % calcDuration already includes the ringdown time
 end
 
 % RF amplitude check

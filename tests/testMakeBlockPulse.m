@@ -1,12 +1,33 @@
+%!test %%% on Octave run with oruntests() %%%
+%! testMakeBlockPulse
 function tests = testMakeBlockPulse
-    tests = functiontests(localfunctions);
+    try
+        mr.opts();
+    catch
+        pulseqPath=fullfile(fileparts(mfilename),'..','matlab');
+        addpath(genpath(pulseqPath));
+    end
+    if exist('functiontests')
+        tests = functiontests(localfunctions);
+    else
+        lf=localfunctions();
+        testCase=makeOctaveTestCase();
+        for i=1:length(lf)
+            f=lf{i};
+            n=func2str(f);
+            if length(n)>3 && strcmp(n(1:4),'test')
+                f(testCase);
+                fprintf('Test function %s completed successfully\n', n);
+            end
+        end
+    end
 end
 
 function test_invalid_use_error(testCase)
     try
         mr.makeBlockPulse(pi, 'duration', 1e-3, 'use', 'foo');
     catch ME
-        assert(contains(ME.message, "value of 'use' is invalid"));
+        assert(~isempty(strfind(lower(ME.message), 'of ''use'''))); % Octave and Matlab throw different errors, but both contain "of 'use'"
     end
 end
 
@@ -15,7 +36,7 @@ function test_bandwidth_and_duration_error(testCase)
         pulse = mr.makeBlockPulse(pi);
     catch ME
         % Check for the user warning
-        assert(strcmp(ME.message, 'Either bandwidth or duration must be defined'));
+        assert(strncmp(ME.message, 'Either bandwidth or duration must be defined', 44));
     end
 end
 
@@ -24,18 +45,18 @@ function test_generation_methods(testCase)
 
     % Case 1: With duration
     pulse = mr.makeBlockPulse(pi, 'duration', 1e-3);
-    assert(isstruct(pulse));
-    assert(pulse.shape_dur == 1e-3);
+    testCase.verifyTrue(isstruct(pulse));
+    testCase.verifyTrue(pulse.shape_dur == 1e-3);
 
     % Case 2: With bandwidth
-    pulse = mr.makeBlockPulse(pi, 'bandwidth', 1e3);
-    assert(isstruct(pulse));
-    assert(pulse.shape_dur == 1 / (4 * 1e3));
+    pulse = mr.makeBlockPulse(pi, 'bandwidth', 0.3e3);
+    testCase.verifyTrue(isstruct(pulse));
+    testCase.verifyTrue(abs(pulse.shape_dur - 1 / (4 * 0.3e3))<1e-6);
 
     % Case 3: With bandwidth and time_bw_product
     pulse = mr.makeBlockPulse(pi, 'bandwidth', 1e3, 'timeBwProduct', 5);
-    assert(isstruct(pulse));
-    assert(pulse.shape_dur == 5 / 1e3);
+    testCase.verifyTrue(isstruct(pulse));
+    testCase.verifyTrue(abs(pulse.shape_dur- 5 / 1e3) < 1e-6);
 end
 
 function test_amp_calculation(testCase)
